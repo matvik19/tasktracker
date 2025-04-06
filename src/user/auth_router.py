@@ -41,8 +41,8 @@ async def login_for_token(
     try:
         response = await service.authenticate_user(user_data)
         return response
-    except (UserCredentialsException, UserNotActiveException):
-        raise HTTPException(status_code=401, detail="Invalid credentials or user not active")
+    except UserCredentialsException:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
     except Exception as e:
         logging.exception(f"Error user auth. email: {user_data.email}, Error: {e}")
         raise HTTPException(status_code=400, detail="User authorization error")

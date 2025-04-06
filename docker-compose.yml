@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+    container_name: tasktracker_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "0.0.0.0:8000:8000"
+    networks:
+      - tasktracker_network
+      - postgres_network
+
+networks:
+  tasktracker_network:
+    name: tasktracker_network
+  postgres_network:
+    external: true

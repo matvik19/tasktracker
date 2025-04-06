@@ -10,7 +10,6 @@ from src.common.config import DEFAULT_ENCODING, HMAC_DIGEST_MODE, JWT_SIGN_ALGOR
 from src.common.exceptions import (
     InvalidTokenException,
     UserAlreadyExistsException,
-    UserNotActiveException,
     UserNotAuthorizedException,
 )
 from src.user.models import User
@@ -82,7 +81,7 @@ async def get_current_user(token_in_cookie: str = Security(auth_scheme)) -> User
         user = await get_user_from_db(email)
         if user is None:
             raise InvalidTokenException
-        # Если понадобится проверка активности – добавить условие по полю is_active
+
         return user
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")

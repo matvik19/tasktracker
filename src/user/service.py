@@ -6,10 +6,12 @@ from src.common.exceptions import UserCredentialsException
 from src.user.repository import UserRepository
 from src.user.schemas import CreateUserSchema, LoginUserSchema, UpdateUserSchema
 
+
 class UserAuthService:
     """
     Сервис для регистрации и аутентификации.
     """
+
     def __init__(self, user_repository: UserRepository):
         # Создаем экземпляр репозитория
         self.user_repository = user_repository
@@ -36,7 +38,10 @@ class UserAuthService:
             key="authorization",
             value=access_token,
             httponly=True,
-            expires=(datetime.now(timezone.utc) + timedelta(minutes=jwt_auth.ACCESS_TOKEN_EXPIRE_MINUTES)).timestamp(),
+            expires=(
+                datetime.now(timezone.utc)
+                + timedelta(minutes=jwt_auth.ACCESS_TOKEN_EXPIRE_MINUTES)
+            ).timestamp(),
             path="/",
             secure=False,  # Если используете HTTPS, установить True
             samesite="lax",
@@ -53,6 +58,7 @@ class UserService:
     """
     Сервис для операций CRUD над пользователями.
     """
+
     def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
 
@@ -68,3 +74,6 @@ class UserService:
         if "password" in data and data["password"]:
             data["password"] = jwt_auth.get_password_hash(data["password"])
         return await self.user_repository.update_one(user_id, data)
+
+    async def get_all_users(self):
+        return await self.user_repository.find_all()

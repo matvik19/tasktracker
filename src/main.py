@@ -1,3 +1,5 @@
+import subprocess
+
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -7,7 +9,9 @@ from src.routers import all_routers
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    subprocess.run("alembic upgrade head", shell=True, check=True)
     yield
+
 
 app = FastAPI(
     title="Duplication contact widget",
