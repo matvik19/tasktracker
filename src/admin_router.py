@@ -35,3 +35,18 @@ async def admin_mark_task_completed(
     except Exception as e:
         logging.exception(f"Error marking task {task_id} as completed by admin: {e}")
         raise HTTPException(status_code=400, detail="Error marking task as completed")
+
+
+@admin_router.get("/task/{user_id}", response_model=list[GetTaskSchema])
+async def get_tasks_by_user(
+    user_id: int,
+    service: Annotated[TaskService, Depends(task_service)],
+):
+    """
+    Получить все задачи конкретного пользователя по его user_id (без авторизации).
+    """
+    try:
+        return await service.get_tasks(user_id)
+    except Exception as e:
+        logging.exception(f"Error getting tasks by user {user_id}: {e}")
+        raise HTTPException(status_code=400, detail="Error getting user tasks")

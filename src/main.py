@@ -9,7 +9,7 @@ from src.routers import all_routers
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    subprocess.run("alembic upgrade head", shell=True, check=True)
+    # subprocess.run("alembic upgrade head", shell=True, check=True)
     yield
 
 

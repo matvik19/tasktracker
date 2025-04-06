@@ -3,10 +3,18 @@ from datetime import datetime, timedelta
 import bcrypt
 from fastapi import HTTPException, Security
 from fastapi.security import APIKeyCookie
+from fastapi_mail import MessageSchema, FastMail, ConnectionConfig
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from src.common.config import DEFAULT_ENCODING, HMAC_DIGEST_MODE, JWT_SIGN_ALGORITHM, TOKEN_SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES
+from src.common.config import (
+    DEFAULT_ENCODING,
+    HMAC_DIGEST_MODE,
+    JWT_SIGN_ALGORITHM,
+    TOKEN_SECRET_KEY,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    MAIL_PASSWORD_APP,
+)
 from src.common.exceptions import (
     InvalidTokenException,
     UserAlreadyExistsException,
@@ -19,8 +27,22 @@ from src.user.repository import UserRepository
 auth_scheme = APIKeyCookie(name="authorization", auto_error=False)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+conf = ConnectionConfig(
+    MAIL_USERNAME="matvey.sherbaev@gmail.com",
+    MAIL_PASSWORD=MAIL_PASSWORD_APP,
+    MAIL_FROM="matvey.sherbaev@gmail.com",
+    MAIL_PORT=587,
+    MAIL_SERVER="smtp.gmail.com",
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=False,
+)
 
-def _pepper_password(password: str, salt: bytes, encoding: str = DEFAULT_ENCODING) -> bytes:
+
+def _pepper_password(
+    password: str, salt: bytes, encoding: str = DEFAULT_ENCODING
+) -> bytes:
     bpwd = password.encode(encoding)
     pepper = TOKEN_SECRET_KEY.encode(encoding)
     seasoned = hmac.new(pepper, msg=bpwd, digestmod=HMAC_DIGEST_MODE)
@@ -34,7 +56,9 @@ def get_password_hash(password: str, encoding: str = DEFAULT_ENCODING) -> str:
     return bcrypt.hashpw(peppered, salt).decode(encoding)
 
 
-def verify_password(plain_password: str, hashed_password: str, encoding: str = DEFAULT_ENCODING) -> bool:
+def verify_password(
+    plain_password: str, hashed_password: str, encoding: str = DEFAULT_ENCODING
+) -> bool:
     bsalt = hashed_password[:29].encode(encoding)
     peppered = _pepper_password(plain_password, bsalt, encoding)
     return bcrypt.checkpw(peppered, hashed_password.encode(encoding))
@@ -73,7 +97,9 @@ async def get_current_user(token_in_cookie: str = Security(auth_scheme)) -> User
     if not token_in_cookie:
         raise UserNotAuthorizedException
     try:
-        payload = jwt.decode(token_in_cookie, TOKEN_SECRET_KEY, algorithms=[JWT_SIGN_ALGORITHM])
+        payload = jwt.decode(
+            token_in_cookie, TOKEN_SECRET_KEY, algorithms=[JWT_SIGN_ALGORITHM]
+        )
         email: str = payload.get("sub")
         exp_time = datetime.utcfromtimestamp(payload.get("exp"))
         if email is None or exp_time < datetime.utcnow():
@@ -86,4 +112,24 @@ async def get_current_user(token_in_cookie: str = Security(auth_scheme)) -> User
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error getting authorization data - {e}")
+        raise HTTPException(
+            status_code=400, detail=f"Error getting authorization data - {e}"
+        )
+
+
+def create_password_reset_token(email: str) -> str:
+    expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode = {"sub": email, "exp": expire}
+    return jwt.encode(to_encode, TOKEN_SECRET_KEY, algorithm=JWT_SIGN_ALGORITHM)
+
+
+async def send_password_reset_email(email: str, token: str):
+    reset_url = f"https://frontend.example.com/reset-password?token={token}"
+    message = MessageSchema(
+        subject="Password Reset",
+        recipients=[email],
+        body=f"Click to reset your password: {reset_url}",
+        subtype="plain",
+    )
+    fm = FastMail(conf)
+    await fm.send_message(message)

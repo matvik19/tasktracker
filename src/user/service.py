@@ -2,9 +2,11 @@ from datetime import datetime, timedelta, timezone
 from fastapi import Response
 from fastapi.responses import JSONResponse
 from src.common import jwt_auth
+from src.common.config import MAIL_PASSWORD_APP
 from src.common.exceptions import UserCredentialsException
 from src.user.repository import UserRepository
 from src.user.schemas import CreateUserSchema, LoginUserSchema, UpdateUserSchema
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 
 
 class UserAuthService:

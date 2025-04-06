@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.user.dependencies import user_service
+from src.user.models import User
 from src.user.schemas import GetUserSchema, UpdateUserSchema
 from src.user.service import UserService
 from src.common import jwt_auth
@@ -13,6 +14,13 @@ user_router = APIRouter(
     tags=["user_api"],
     responses={404: {"description": "Not found"}},
 )
+
+
+@user_router.get("/get_current", response_model=GetUserSchema)
+async def get_current_user_router(
+    current_user: User = Depends(jwt_auth.get_current_user),
+):
+    return current_user
 
 
 @user_router.get(
