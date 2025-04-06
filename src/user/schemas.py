@@ -14,7 +14,7 @@ def password_validate(value: str) -> str:
 
 
 class CreateUserSchema(BaseSchema):
-    email: EmailStr = Field(...)
+    email: str = Field(...)
     password: str = Field(...)
 
     @field_validator("email", mode="before")
@@ -29,7 +29,7 @@ class CreateUserSchema(BaseSchema):
 
 
 class LoginUserSchema(BaseSchema):
-    email: EmailStr = Field(...)
+    email: str = Field(...)
     password: str = Field(...)
 
     @field_validator("email", mode="before")
