@@ -48,7 +48,7 @@ async def login_for_token(
     service: Annotated[UserAuthService, Depends(user_auth_service)],
 ):
     try:
-        response = await service.authenticate_user_with_token(user_data)
+        response = await service.authenticate_user(user_data)
         return response
     except UserCredentialsException:
         raise HTTPException(status_code=401, detail="Invalid credentials")
