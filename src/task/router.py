@@ -15,6 +15,19 @@ task_router = APIRouter(
 )
 
 
+@task_router.get("/{task_id}", response_model=GetTaskSchema)
+async def get_task_by_id(
+    task_id: int,
+    service: Annotated[TaskService, Depends(task_service)],
+    current_user: User = Depends(jwt_auth.get_current_user),
+):
+    try:
+        return await service.get_task_by_id(task_id, current_user.id)
+    except Exception as e:
+        logging.exception(f"Error getting task {task_id}: {e}")
+        raise HTTPException(status_code=404, detail="Task not found")
+
+
 @task_router.post("", response_model=GetTaskSchema)
 async def create_task(
     task_data: CreateTaskSchema,

@@ -58,3 +58,6 @@ class TaskService:
             return await self.task_repository.admin_update_one(task_id, data)
         except Exception:
             raise TaskNotExist()
+
+    async def get_task_by_id(self, task_id: int, user_id: int):
+        return await self.task_repository.find_one_by_id(task_id, user_id)

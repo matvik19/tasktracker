@@ -2,11 +2,22 @@ from sqlalchemy import select, update, delete
 from src.task.models import Task
 from src.common.database import async_session_maker
 from src.common.repository import SQLAlchemyRepository
-from src.common.exceptions import ItemNotExist
+from src.common.exceptions import ItemNotExist, TaskNotExist
 
 
 class TaskRepository(SQLAlchemyRepository):
     model: type[Task] = Task
+
+    async def find_one_by_id(self, task_id: int, user_id: int):
+        async with async_session_maker() as session:
+            stmt = select(self.model).where(
+                self.model.id == task_id, self.model.user_id == user_id
+            )
+            result = await session.execute(stmt)
+            task = result.scalar_one_or_none()
+            if task is None:
+                raise TaskNotExist()
+            return task
 
     async def find_by_user(self, user_id: int):
         async with async_session_maker() as session:
