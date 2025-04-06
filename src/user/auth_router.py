@@ -46,26 +46,14 @@ async def create_user_endpoint(
 async def login_for_token(
     user_data: LoginUserSchema,
     service: Annotated[UserAuthService, Depends(user_auth_service)],
-    response: Response,
 ):
     try:
-        token = await service.authenticate_user_with_token(user_data)
-
-        # Ставим куку здесь
-        response.set_cookie(
-            key="authorization",
-            value=token["access_token"],
-            httponly=True,
-            secure=False,  # True на проде
-            samesite="lax",  # или 'strict' / 'none' в зависимости от ситуации
-            max_age=60 * 60 * 24 * 3,  # срок жизни, например 3 дня
-            path="/",
-        )
-
-        return {"message": "Login successful", "token_type": "Bearer"}
+        response = await service.authenticate_user(user_data)
+        return response
     except UserCredentialsException:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     except Exception as e:
+        logging.exception(f"Error user auth. email: {user_data.email}, Error: {e}")
         raise HTTPException(status_code=400, detail="User authorization error")
 
 

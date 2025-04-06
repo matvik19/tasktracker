@@ -22,7 +22,7 @@ class UserAuthService:
         # Регистрируем пользователя через jwt_auth
         await jwt_auth.create_user(user_data.model_dump())
         # Сразу логиним – возвращаем ответ с установкой cookie
-        access_token_response = await self.authenticate_user_with_token(
+        access_token_response = await self.authenticate_user(
             LoginUserSchema(email=user_data.email, password=user_data.password)
         )
         return access_token_response
@@ -62,7 +62,13 @@ class UserAuthService:
         access_token = jwt_auth.create_access_token(email=user.email)
 
         # Возвращаем токен в теле ответа, без set_cookie
-        return {"access_token": access_token}
+        return JSONResponse(
+            {
+                "message": "Login successful",
+                "access_token": access_token,
+                "token_type": "Bearer",
+            }
+        )
 
     @staticmethod
     async def logout_user(response: Response):
