@@ -8,6 +8,12 @@ from src.common.exceptions import ItemNotExist
 class TaskRepository(SQLAlchemyRepository):
     model: type[Task] = Task
 
+    async def find_by_user(self, user_id: int):
+        async with async_session_maker() as session:
+            stmt = select(self.model).where(self.model.user_id == user_id)
+            result = await session.execute(stmt)
+            return result.scalars().all()
+
     async def find_by_status_and_priority(
         self,
         user_id: int,
@@ -20,6 +26,7 @@ class TaskRepository(SQLAlchemyRepository):
                 stmt = stmt.where(self.model.is_completed == is_completed)
             if priority is not None:
                 stmt = stmt.where(self.model.priority == priority)
+            stmt = stmt.order_by(self.model.priority.asc())  # сортировка по приоритету
             result = await session.execute(stmt)
             return result.scalars().all()
 

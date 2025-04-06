@@ -8,8 +8,13 @@ class TaskService:
         self.task_repository = task_repository
 
     async def create_task(self, task_data: CreateTaskSchema, user_id: int):
+        # Получаем максимальный текущий приоритет для пользователя
+        current_tasks = await self.task_repository.find_by_user(user_id)
+        max_priority = max((task.priority for task in current_tasks), default=0)
+
         data = task_data.model_dump(exclude_unset=True)
-        data["user_id"] = user_id  # Привязываем задачу к пользователю
+        data["user_id"] = user_id
+        data["priority"] = max_priority + 1  # следующий приоритет
         return await self.task_repository.create_one(data)
 
     async def update_task(
