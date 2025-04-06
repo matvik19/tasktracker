@@ -62,13 +62,7 @@ class UserAuthService:
         access_token = jwt_auth.create_access_token(email=user.email)
 
         # Возвращаем токен в теле ответа, без set_cookie
-        return JSONResponse(
-            {
-                "message": "Login successful",
-                "access_token": access_token,
-                "token_type": "Bearer",
-            }
-        )
+        return {"access_token": access_token}
 
     @staticmethod
     async def logout_user(response: Response):
