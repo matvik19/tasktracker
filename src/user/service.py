@@ -22,7 +22,7 @@ class UserAuthService:
         # Регистрируем пользователя через jwt_auth
         await jwt_auth.create_user(user_data.model_dump())
         # Сразу логиним – возвращаем ответ с установкой cookie
-        access_token_response = await self.authenticate_user(
+        access_token_response = await self.authenticate_user_with_token(
             LoginUserSchema(email=user_data.email, password=user_data.password)
         )
         return access_token_response
@@ -49,6 +49,26 @@ class UserAuthService:
             samesite="lax",
         )
         return response
+
+    async def authenticate_user_with_token(self, user_data: LoginUserSchema):
+        user = await self.user_repository.find_by_email(user_data.email)
+        if not user:
+            raise UserCredentialsException
+
+        check_pass = jwt_auth.verify_password(user_data.password, user.password)
+        if not check_pass:
+            raise UserCredentialsException
+
+        access_token = jwt_auth.create_access_token(email=user.email)
+
+        # Возвращаем токен в теле ответа, без set_cookie
+        return JSONResponse(
+            {
+                "message": "Login successful",
+                "access_token": access_token,  # <-- клиент возьмёт и сам установит
+                "token_type": "Bearer",
+            }
+        )
 
     @staticmethod
     async def logout_user(response: Response):
